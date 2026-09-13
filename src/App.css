@@ -1,0 +1,105 @@
+/* =========================================================
+   Tech Runner - Application Shell
+   Framing the modular zones
+   ========================================================= */
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  background: #07090e;
+  color: #e2e8f0;
+}
+
+.shell-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: #0d111a;
+  border-bottom: 1px solid #1e2638;
+}
+
+.shell-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.shell-title {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #00f0ff;
+  text-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+}
+
+.shell-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: #94a3b8;
+  background: #1e2638;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 1px;
+}
+
+.domain-navigation {
+  display: flex;
+  gap: 8px;
+}
+
+.domain-pill {
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #161c2b;
+  color: #64748b;
+  border: 1px solid #242d44;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.domain-pill.active {
+  background: rgba(0, 240, 255, 0.12);
+  color: #00f0ff;
+  border-color: rgba(0, 240, 255, 0.4);
+  font-weight: 600;
+}
+
+.domain-pill.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00f0ff;
+  box-shadow: 0 0 6px #00f0ff;
+}
+
+.shell-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+@media (max-width: 768px) {
+  .shell-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .domain-navigation {
+    flex-wrap: wrap;
+  }
+  .shell-main {
+    padding: 10px 4px;
+  }
+}
