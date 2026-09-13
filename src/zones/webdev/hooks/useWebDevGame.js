@@ -333,7 +333,6 @@ export function useWebDevGame({
       }
 
       // 5. Update Obstacles and Evaluate Accurate Visible Collision
-      const scrollSpeed = 28 // % of screen width per second
       const activeObstacles = []
       let collisionDetected = false
       let fatalObstacle = null
