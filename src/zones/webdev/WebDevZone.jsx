@@ -24,6 +24,7 @@ export function WebDevZone({
   onScoreChange,
   targetDistance = 1000,
   autoStart = false,
+  playerId,
 }) {
   const {
     status,
@@ -37,6 +38,9 @@ export function WebDevZone({
     coinsCount,
     lives,
     dodgedCount,
+    obstaclesHit,
+    completionRecord,
+    victoryPoint,
     obstacles,
     coins,
     lastCollisionObstacle,
@@ -53,6 +57,7 @@ export function WebDevZone({
     onScoreChange,
     targetDistance,
     autoStart,
+    playerId,
   })
 
   // Keyboard controls listener
@@ -88,6 +93,7 @@ export function WebDevZone({
         isSliding={isSliding}
         obstacles={obstacles}
         coins={coins}
+        victoryPoint={victoryPoint}
         isHit={status === 'GAME_OVER'}
       />
 
@@ -128,7 +134,26 @@ export function WebDevZone({
           <button
             type="button"
             className="action-pill-btn btn-jump"
-            onClick={triggerJump}
+            onPointerDown={(e) => {
+              if (status === 'PLAYING') {
+                triggerJump()
+              }
+            }}
+            onMouseDown={(e) => {
+              if (status === 'PLAYING') {
+                triggerJump()
+              }
+            }}
+            onTouchStart={(e) => {
+              if (status === 'PLAYING') {
+                triggerJump()
+              }
+            }}
+            onClick={(e) => {
+              if (status === 'PLAYING') {
+                triggerJump()
+              }
+            }}
             disabled={status !== 'PLAYING'}
             aria-label="Jump"
           >
@@ -200,8 +225,11 @@ export function WebDevZone({
           score={score}
           distance={distance}
           dodgedCount={dodgedCount}
+          coinsCount={coinsCount}
+          obstaclesHit={obstaclesHit}
+          completionRecord={completionRecord}
           onRestart={startGame}
-          onNextDomain={() => onZoneComplete?.({ score, distance, dodgedCount, coinsCount })}
+          onNextDomain={() => onZoneComplete?.(completionRecord || { score, distance, dodgedCount, coinsCount, obstaclesHit })}
         />
       )}
     </div>

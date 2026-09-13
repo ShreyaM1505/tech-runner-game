@@ -3,6 +3,7 @@ import {
   OBSTACLE_TYPES,
   GAME_CONFIG,
 } from '../constants/gameConfig'
+import { recordService } from '../services/recordService'
 
 const OBSTACLE_KEYS = Object.keys(OBSTACLE_TYPES)
 
@@ -12,6 +13,7 @@ export function useWebDevGame({
   onScoreChange,
   targetDistance = GAME_CONFIG.TARGET_DISTANCE,
   autoStart = false,
+  playerId,
 }) {
   const [status, setStatus] = useState(autoStart ? 'PLAYING' : 'IDLE')
   const [playerX, setPlayerX] = useState(GAME_CONFIG.PLAYER_DEFAULT_X)
@@ -24,6 +26,9 @@ export function useWebDevGame({
   const [coinsCount, setCoinsCount] = useState(0)
   const [lives, setLives] = useState(4)
   const [dodgedCount, setDodgedCount] = useState(0)
+  const [obstaclesHit, setObstaclesHit] = useState(0)
+  const [completionRecord, setCompletionRecord] = useState(null)
+  const [victoryPoint, setVictoryPoint] = useState(null)
   const [obstacles, setObstacles] = useState([])
   const [coins, setCoins] = useState([])
   const [lastCollisionObstacle, setLastCollisionObstacle] = useState(null)
@@ -44,6 +49,9 @@ export function useWebDevGame({
     coinsCount: 0,
     lives: 4,
     dodgedCount: 0,
+    obstaclesHit: 0,
+    elapsedTime: 0,
+    victoryPoint: null,
     obstacles: [],
     coins: [],
     nextSpawnDistance: 60, // First obstacle after a comfortable start
@@ -57,9 +65,15 @@ export function useWebDevGame({
     if (stateRef.current.status !== 'PLAYING') return
     if (stateRef.current.isJumping || stateRef.current.isSliding) return
 
+    const now = performance.now()
     stateRef.current.isJumping = true
-    stateRef.current.jumpStartTime = performance.now()
+    stateRef.current.jumpStartTime = now
+
+    // Immediate initial displacement so the very first render already moves upwards
+    const initialJumpY = Math.sin((16 / GAME_CONFIG.JUMP_DURATION_MS) * Math.PI) * GAME_CONFIG.JUMP_HEIGHT
+    stateRef.current.jumpY = initialJumpY
     setIsJumping(true)
+    setJumpY(initialJumpY)
   }, [])
 
   // SLIDE trigger
@@ -121,6 +135,9 @@ export function useWebDevGame({
       coinsCount: 0,
       lives: 4,
       dodgedCount: 0,
+      obstaclesHit: 0,
+      elapsedTime: 0,
+      victoryPoint: null,
       obstacles: [],
       coins: [],
       nextSpawnDistance: 60,
@@ -138,6 +155,9 @@ export function useWebDevGame({
     setCoinsCount(0)
     setLives(4)
     setDodgedCount(0)
+    setObstaclesHit(0)
+    setCompletionRecord(null)
+    setVictoryPoint(null)
     setObstacles([])
     setCoins([])
     setLastCollisionObstacle(null)
@@ -186,28 +206,15 @@ export function useWebDevGame({
     const loop = (currentTime) => {
       const dt = Math.min((currentTime - stateRef.current.lastTime) / 1000, 0.1)
       stateRef.current.lastTime = currentTime
+      stateRef.current.elapsedTime += dt
 
       // 1. Advance track distance
       const distanceSpeed = 22 // meters/sec
       const currentDist = stateRef.current.distance + distanceSpeed * dt
       stateRef.current.distance = currentDist
 
-      // Level Completion Check
-      if (currentDist >= targetDistance) {
-        stateRef.current.status = 'COMPLETED'
-        setStatus('COMPLETED')
-        const finalScore = stateRef.current.score + Math.floor(targetDistance)
-        setScore(finalScore)
-        setDistance(targetDistance)
-        onScoreChange?.(finalScore)
-        onZoneComplete?.({
-          score: finalScore,
-          distance: targetDistance,
-          dodgedCount: stateRef.current.dodgedCount,
-          coinsCount: stateRef.current.coinsCount,
-        })
-        return
-      }
+      // Common track scroll speed
+      const scrollSpeed = 28 // % of screen width per second
 
       // 2. Handle Player Horizontal Left/Right Movement
       let curX = stateRef.current.playerX
@@ -220,7 +227,80 @@ export function useWebDevGame({
       curX = Math.max(GAME_CONFIG.PLAYER_MIN_X, Math.min(GAME_CONFIG.PLAYER_MAX_X, curX))
       stateRef.current.playerX = curX
 
-      // 3. Handle Jump Physics (Smooth parabolic arc + landing bounce)
+      // 3. Victory Point Check (Available after 45 seconds of gameplay)
+      // Before 45 seconds: do not allow level completion
+      // At 45 seconds: show the Victory/Finish Point at the end of the path
+      const victoryThreshold = GAME_CONFIG.VICTORY_TIME_SECONDS || 45
+      if (stateRef.current.elapsedTime >= victoryThreshold && !stateRef.current.victoryPoint) {
+        stateRef.current.victoryPoint = {
+          x: 105, // End of the visible track path
+          active: true,
+        }
+        setVictoryPoint({ ...stateRef.current.victoryPoint })
+      }
+
+      // If Victory Point is active, scroll it along the path towards the player
+      if (stateRef.current.victoryPoint && stateRef.current.victoryPoint.active) {
+        stateRef.current.victoryPoint.x -= scrollSpeed * dt
+        setVictoryPoint({ ...stateRef.current.victoryPoint })
+
+        // When the player reaches the Victory Point, trigger level-completed event
+        if (stateRef.current.victoryPoint.x <= curX) {
+          stateRef.current.status = 'COMPLETED'
+          setStatus('COMPLETED')
+          const finalScore = stateRef.current.score + Math.floor(currentDist)
+          setScore(finalScore)
+          setDistance(Math.floor(currentDist))
+          onScoreChange?.(finalScore)
+
+          const runDuration = stateRef.current.elapsedTime
+          const formattedTime = recordService.formatCompletionTime(runDuration)
+
+          const completionEventPayload = {
+            status: 'COMPLETED',
+            zoneId: 'web_development',
+            domain: 'web_development',
+            nextZoneId: 'domain_3',
+            playerId,
+            score: finalScore,
+            distance: Math.floor(currentDist),
+            coins: stateRef.current.coinsCount,
+            obstaclesAvoided: stateRef.current.dodgedCount,
+            obstaclesHit: stateRef.current.obstaclesHit,
+            completionTime: formattedTime,
+            completionDurationSeconds: Math.round(runDuration * 100) / 100,
+            victoryReached: true,
+            metadata: {
+              targetDistance,
+              livesRemaining: stateRef.current.lives,
+              victoryTimeRequired: victoryThreshold,
+            },
+          }
+
+          // Persist via modular record service (supports LocalStorage & API/DB)
+          recordService
+            .saveCompletionRecord(completionEventPayload)
+            .then((savedRecord) => {
+              const fullPayload = { ...completionEventPayload, ...savedRecord }
+              setCompletionRecord(fullPayload)
+              onZoneComplete?.(fullPayload)
+            })
+            .catch((err) => {
+              console.error('[WebDevZone] Failed to store completion record:', err)
+              const fallbackRecord = {
+                ...completionEventPayload,
+                id: `rec_${Date.now()}`,
+                completedAt: new Date().toISOString(),
+              }
+              setCompletionRecord(fallbackRecord)
+              onZoneComplete?.(fallbackRecord)
+            })
+
+          return
+        }
+      }
+
+      // 4. Handle Jump Physics (Smooth parabolic arc + landing bounce)
       if (stateRef.current.isJumping) {
         const elapsed = currentTime - stateRef.current.jumpStartTime
         const progress = elapsed / GAME_CONFIG.JUMP_DURATION_MS
@@ -238,8 +318,9 @@ export function useWebDevGame({
         stateRef.current.jumpY = 0
       }
 
-      // 4. Procedural Spawning with Generous Spacing
-      if (currentDist >= stateRef.current.nextSpawnDistance) {
+      // 5. Procedural Spawning with Generous Spacing
+      // Do not spawn new obstacles directly at or behind the finish line once active
+      if (!stateRef.current.victoryPoint && currentDist >= stateRef.current.nextSpawnDistance) {
         stateRef.current.obstacles.push(spawnObstacle())
         // Set generous gap: 75m to 105m (approx 3.5 to 4.8 seconds between obstacles)
         const spacing = GAME_CONFIG.SPAWN_SPACING_MIN + Math.random() * (GAME_CONFIG.SPAWN_SPACING_MAX - GAME_CONFIG.SPAWN_SPACING_MIN)
@@ -290,8 +371,10 @@ export function useWebDevGame({
               collisionDetected = true
               fatalObstacle = obs.config
               stateRef.current.lives -= 1
+              stateRef.current.obstaclesHit += 1
               stateRef.current.invulnerableUntil = currentTime + 1200
               setLives(stateRef.current.lives)
+              setObstaclesHit(stateRef.current.obstaclesHit)
               setIsInvulnerable(true)
               setTimeout(() => setIsInvulnerable(false), 1200)
 
@@ -304,9 +387,14 @@ export function useWebDevGame({
                 setDistance(Math.floor(currentDist))
                 onScoreChange?.(finalScore)
                 onGameOver?.({
+                  status: 'GAME_OVER',
+                  zoneId: 'web_development',
+                  reason: 'ALL_HEARTS_LOST',
+                  livesRemaining: 0,
                   score: finalScore,
                   distance: Math.floor(currentDist),
                   obstacle: fatalObstacle,
+                  elapsedTime: stateRef.current.elapsedTime,
                 })
                 return
               }
@@ -379,7 +467,7 @@ export function useWebDevGame({
     return () => {
       if (animationFrameId) cancelAnimationFrame(animationFrameId)
     }
-  }, [status, targetDistance, spawnObstacle, spawnCoinRow, onScoreChange, onZoneComplete, onGameOver])
+  }, [status, targetDistance, spawnObstacle, spawnCoinRow, onScoreChange, onZoneComplete, onGameOver, playerId])
 
   // Cleanup on unmount
   useEffect(() => {
@@ -401,6 +489,9 @@ export function useWebDevGame({
     coinsCount,
     lives,
     dodgedCount,
+    obstaclesHit,
+    completionRecord,
+    victoryPoint,
     obstacles,
     coins,
     lastCollisionObstacle,

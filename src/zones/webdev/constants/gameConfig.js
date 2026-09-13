@@ -94,7 +94,8 @@ export const OBSTACLE_TYPES = {
 }
 
 export const GAME_CONFIG = {
-  TARGET_DISTANCE: 1000,   // Distance needed to complete level (meters)
+  VICTORY_TIME_SECONDS: 45, // Gameplay duration (seconds) before Victory Point appears
+  TARGET_DISTANCE: 1000,   // Reference distance for HUD (meters)
   BASE_SPEED: 280,         // Horizontal scrolling speed in pixels per second
   PLAYER_MIN_X: 9,         // Left boundary percentage
   PLAYER_MAX_X: 40,        // Right boundary percentage

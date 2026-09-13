@@ -412,7 +412,6 @@
   z-index: 20;
   pointer-events: none;
   filter: drop-shadow(0 0 8px rgba(0, 216, 255, 0.6));
-  transition: bottom 0.05s linear;
 }
 
 .man-body-wrapper {
@@ -1383,6 +1382,9 @@
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6), 0 0 10px rgba(14, 165, 233, 0.2);
   transition: all 0.12s ease;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .action-pill-btn:hover:not(:disabled) {
@@ -1547,11 +1549,52 @@
   color: #ffffff;
 }
 
+.modal-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.player-id-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(14, 165, 233, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  color: #e0f2fe;
+}
+
+.player-label {
+  color: #7dd3fc;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 9px;
+}
+
+.player-value {
+  font-family: monospace;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
 .modal-stats {
   display: flex;
   justify-content: center;
   gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+}
+
+.modal-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
 }
 
 .stat-card {
@@ -1570,16 +1613,231 @@
   color: var(--neon-cyan);
 }
 
+.stat-card .coin-stat {
+  color: #facc15;
+}
+
+.stat-card .avoided-stat {
+  color: #4ade80;
+}
+
+.stat-card .hit-stat {
+  color: #f87171;
+}
+
+.stat-card .time-stat {
+  color: #38bdf8;
+  font-family: monospace;
+}
+
 .stat-name {
   font-size: 10px;
   color: #93c5fd;
   margin-top: 2px;
 }
 
+.record-status-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(74, 222, 128, 0.35);
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #86efac;
+  margin-bottom: 18px;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.status-indicator-dot {
+  width: 7px;
+  height: 7px;
+  background: #22c55e;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #22c55e;
+  animation: pulseDot 2s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.record-ref-id {
+  background: rgba(0, 0, 0, 0.35);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #cbd5e1;
+  font-family: monospace;
+  font-size: 10px;
+}
+
 .modal-actions {
   display: flex;
   justify-content: center;
   gap: 12px;
+}
+
+/* =========================================================
+   Victory Point / Finish Line Gate (Appears at 45s)
+   ========================================================= */
+.victory-point-entity {
+  position: absolute;
+  bottom: 13%;
+  width: 90px;
+  height: 220px;
+  transform: translateX(-50%);
+  z-index: 24;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.victory-arch-frame {
+  position: relative;
+  width: 86px;
+  height: 200px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.arch-pylon {
+  width: 10px;
+  height: 190px;
+  background: linear-gradient(to top, #0f172a, #0369a1, #38bdf8);
+  border: 1.5px solid var(--neon-cyan);
+  border-radius: 4px;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.7);
+  position: relative;
+}
+
+.pylon-beacon {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 12px;
+  background: #22c55e;
+  border-radius: 50%;
+  box-shadow: 0 0 12px #4ade80, 0 0 24px #22c55e;
+  animation: beaconPulse 0.8s alternate infinite ease-in-out;
+}
+
+@keyframes beaconPulse {
+  from { transform: translateX(-50%) scale(0.9); opacity: 0.8; }
+  to { transform: translateX(-50%) scale(1.3); opacity: 1; }
+}
+
+.arch-crossbar {
+  position: absolute;
+  top: 0;
+  left: -22px;
+  right: -22px;
+  height: 50px;
+  background: rgba(13, 27, 62, 0.96);
+  border: 2px solid #22c55e;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.6), 0 0 40px rgba(0, 240, 255, 0.3);
+  overflow: hidden;
+}
+
+.victory-holo-sign {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 6px;
+}
+
+.holo-flag, .holo-icon {
+  font-size: 16px;
+  animation: bounceFlag 1s alternate infinite ease-in-out;
+}
+
+@keyframes bounceFlag {
+  from { transform: translateY(0); }
+  to { transform: translateY(-3px); }
+}
+
+.holo-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.holo-title {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: #4ade80;
+  text-shadow: 0 0 8px rgba(74, 222, 128, 0.8);
+}
+
+.holo-sub {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #38bdf8;
+}
+
+.energy-streamer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #22c55e, #38bdf8, #22c55e);
+  box-shadow: 0 0 8px #38bdf8;
+  animation: streamAnim 1.5s linear infinite;
+}
+
+@keyframes streamAnim {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.victory-gate-field {
+  position: absolute;
+  top: 50px;
+  bottom: 0;
+  width: 72px;
+  background: linear-gradient(to bottom, rgba(34, 197, 94, 0.25), rgba(56, 189, 248, 0.08));
+  border-left: 2px dashed rgba(74, 222, 128, 0.6);
+  border-right: 2px dashed rgba(74, 222, 128, 0.6);
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
+  animation: fieldGlow 1.5s alternate infinite ease-in-out;
+}
+
+@keyframes fieldGlow {
+  from { opacity: 0.5; }
+  to { opacity: 0.9; }
+}
+
+.victory-ground-strip {
+  position: absolute;
+  bottom: -4px;
+  width: 96px;
+  height: 8px;
+  border-radius: 2px;
+  box-shadow: 0 0 10px #4ade80;
+  background: repeating-linear-gradient(
+    45deg,
+    #000000,
+    #000000 8px,
+    #ffffff 8px,
+    #ffffff 16px
+  );
 }
 
 /* Glitch Effect on Collision */

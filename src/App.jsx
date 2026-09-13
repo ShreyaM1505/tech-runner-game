@@ -5,9 +5,9 @@ import './App.css'
 function App() {
   const [lastEvent, setLastEvent] = useState(null)
 
-  const handleZoneComplete = (stats) => {
-    console.log('[Tech Runner] Web Dev Zone Completed:', stats)
-    setLastEvent({ type: 'COMPLETED', stats })
+  const handleZoneComplete = (record) => {
+    console.log('[Tech Runner] Web Dev Zone Completed & Stored Record:', record)
+    setLastEvent({ type: 'COMPLETED', record })
   }
 
   const handleGameOver = (stats) => {

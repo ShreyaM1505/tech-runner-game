@@ -1,6 +1,7 @@
 import React from 'react'
 import { Player } from './Player'
 import { ObstacleItem } from './ObstacleItem'
+import { VictoryPoint } from './VictoryPoint'
 
 export function GameTrack({
   playerX,
@@ -10,6 +11,7 @@ export function GameTrack({
   isSliding,
   obstacles = [],
   coins = [],
+  victoryPoint = null,
   isHit = false,
 }) {
   return (
@@ -67,6 +69,11 @@ export function GameTrack({
           <ObstacleItem key={obstacle.id} obstacle={obstacle} />
         ))}
       </div>
+
+      {/* Victory Point / Finish Gate */}
+      {victoryPoint && victoryPoint.active && (
+        <VictoryPoint x={victoryPoint.x} />
+      )}
 
       {/* 2D Player Character */}
       <Player
